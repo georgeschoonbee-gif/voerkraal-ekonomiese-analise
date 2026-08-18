@@ -1,0 +1,30 @@
+VOERKRAAL EKONOMIESE ANALISE – iPhone PWA V8
+
+HOE OM DIT TE GEBRUIK
+
+Hierdie pakket is 'n Progressive Web App (PWA). Dit moet eers op 'n webadres ge-host word.
+Jy kan dit byvoorbeeld op GitHub Pages, Netlify of Cloudflare Pages plaas.
+
+Sodra die app op 'n HTTPS-webadres beskikbaar is:
+
+1. Maak die webadres in Safari op die iPhone oop.
+2. Tik die Share-knoppie.
+3. Kies "Add to Home Screen".
+4. Kies "Add".
+5. Die app verskyn daarna tussen die gewone apps op die iPhone.
+
+BELANGRIK
+
+- Gestoorde analises word tans plaaslik op elke telefoon se browser gestoor.
+- Die twee gebruikers sal dus nie outomaties mekaar se gestoorde analises sien nie.
+- Die app kan ná die eerste besoek ook offline werk omdat die kernlêers gekas word.
+- As Safari se webwerfdata uitgevee word, kan plaaslik gestoorde analises verlore gaan.
+- Vir gedeelde/sentrale data sal 'n databasis en gebruikersrekeninge later nodig wees.
+
+LÊERS
+index.html
+manifest.webmanifest
+service-worker.js
+icon-180.png
+icon-192.png
+icon-512.png

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="af">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Voerkraal Ekonomiese Analise</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#245b32">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Voerkraal Analise">
+<link rel="apple-touch-icon" href="icon-180.png">
+
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef2ee;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#193523}
+.app{max-width:520px;margin:auto;background:#fff;min-height:100vh}header{background:#245b32;color:#fff;text-align:center;padding:18px}
+header h1{margin:0;font-size:19px}.sub{font-size:12px;opacity:.85;margin-top:3px}.s{padding:20px}.hide{display:none}
+h2{margin:0 0 18px}.choice,.btn{width:100%;padding:17px;margin:8px 0;border:0;border-radius:12px;font-size:17px;font-weight:800}
+.choice{background:#f8faf8;border:2px solid #d7e2d8;color:#245b32;font-size:21px}.btn{background:#245b32;color:#fff}.secondary{background:#e8eee9;color:#245b32}
+.section{font-weight:800;color:#245b32;border-bottom:2px solid #e4eae5;padding:14px 0 6px}
+label{display:block;font-size:12px;font-weight:700;margin:10px 0 4px;color:#59665d}input,select{width:100%;padding:11px;border:1px solid #ccd7ce;border-radius:8px;font-size:16px;background:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.phase{border:1px solid #dbe3dc;border-radius:10px;padding:10px;margin:9px 0}.phase h3{font-size:14px;margin:0;color:#245b32}
+table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}th,td{border:1px solid #d8e0d9;padding:5px;text-align:center}th{background:#edf3ee;color:#245b32}td input{padding:5px;border:0;font-size:11px}
+.card{background:#f3f7f3;border-radius:13px;padding:14px;margin:10px 0}.big{text-align:center;font-size:32px;font-weight:900;color:#245b32}.muted{text-align:center;font-size:11px;color:#68746b}
+.row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #dde5de;font-size:13px}.row:last-child{border:0}.row b{text-align:right}
+</style></head>
+<body><div class="app">
+<header><h1>VOERKRAAL EKONOMIESE ANALISE</h1><div class="sub">iPhone PWA V8</div></header>
+
+<section id="one" class="s">
+<h2>Kies diersoort</h2>
+<button class="choice" onclick="start('Skaap')">🐑 SKAAP</button>
+<button class="choice" onclick="start('Bees')">🐂 BEES</button>
+<button class="btn secondary" onclick="showHistory()">📁 GESTOORDE ANALISES</button>
+</section>
+
+<section id="two" class="s hide">
+<h2 id="title"></h2>
+<div class="section">Klient inligting</div>
+<label>Naam</label><input id="client">
+<label>Datum</label><input id="date" type="date">
+
+<div class="section">Aankoop</div>
+<div class="grid"><div><label>Aankoop gewig (kg)</label><input id="bw" type="number"></div><div><label>Aankoop prys (R/kg)</label><input id="bp" type="number"></div></div>
+<div class="grid"><div><label>Vervoerkoste (R/dier)</label><input id="tr" type="number"></div><div id="wbox"><label>Inkomste wol (R/dier)</label><input id="wool" type="number"></div></div>
+<label>Verwagte GDT (g/dag)</label><input id="adg" type="number">
+
+<div class="section">Slag</div>
+<div class="grid"><div><label>Beplande slag gewig (kg)</label><input id="target" type="number"></div><div><label>Karkas prys (R/kg)</label><input id="cp" type="number"></div></div>
+<div class="grid"><div><label>Uitslag (%)</label><input id="dress" type="number"></div><div><label>Karkas gewig</label><input id="cw" disabled></div></div>
+
+<div class="section">Ander kostes</div>
+<div class="grid"><div><label>Staankoste (R/dier/dag)</label><input id="stand" type="number"></div><div><label>Prosseseringskoste (R/dier)</label><input id="proc" type="number"></div></div>
+<label>Mortaliteit (%)</label><input id="mort" type="number">
+
+<div class="section">Voeding</div>
+<label>Inname (% van LM)</label><input id="intake" type="number" value="4" step=".1">
+<label>Voerstelsel</label><select id="system" onchange="toggleFeed()"><option value="full">Volvoer</option><option value="conc">Konsentraat</option></select>
+
+<div id="full">
+<div class="phase"><h3>Fase 1: Aanvangs</h3><div class="grid"><div><label>Prys (R/ton)</label><input id="p1" type="number" step=".01"></div><div><label>Dae</label><input id="d1" type="number"></div></div></div>
+<div class="phase"><h3>Fase 2: Groei</h3><div class="grid"><div><label>Prys (R/ton)</label><input id="p2" type="number" step=".01"></div><div><label>Dae (bereken)</label><input id="d2" disabled></div></div></div>
+<div class="phase"><h3>Fase 3: Afrond</h3><div class="grid"><div><label>Prys (R/ton)</label><input id="p3" type="number" step=".01"></div><div><label>Dae</label><input id="d3" type="number"></div></div></div>
+</div>
+
+<div id="conc" class="hide">
+<table>
+<tr><th>Grondstof</th><th>R/ton</th><th>Aanvangs kg</th><th>Groei kg</th><th>Afrond kg</th></tr>
+<tr><td id="baseName"></td><td><input id="pbase" type="number"></td><td><input id="aBase" type="number"></td><td><input id="gBase" type="number"></td><td><input id="rBase" type="number"></td></tr>
+<tr><td id="zilName"></td><td><input id="pzil" type="number"></td><td><input id="aZil" type="number"></td><td><input id="gZil" type="number"></td><td><input id="rZil" type="number"></td></tr>
+<tr><td>Mielies</td><td><input id="pm" type="number"></td><td><input id="am" type="number"></td><td><input id="gm" type="number"></td><td><input id="rm" type="number"></td></tr>
+<tr><td>Lusern</td><td><input id="pl" type="number"></td><td><input id="al" type="number"></td><td><input id="gl" type="number"></td><td><input id="rl" type="number"></td></tr>
+<tr><td>Hawer</td><td><input id="po" type="number"></td><td><input id="ao" type="number"></td><td><input id="go" type="number"></td><td><input id="ro" type="number"></td></tr>
+<tr><th>Totaal kg/fase</th><th></th><th id="totA"></th><th id="totG"></th><th id="totR"></th></tr>
+<tr><th>R/ton rantsoen</th><th></th><th id="costA"></th><th id="costG"></th><th id="costR"></th></tr>
+</table>
+<div class="grid"><div><label>Fase 1 dae</label><input id="cd1" type="number"></div><div><label>Fase 3 dae</label><input id="cd3" type="number"></div></div>
+</div>
+
+<button class="btn" onclick="calc()">BEREKEN ANALISE</button>
+<button class="btn secondary" onclick="show('one')">← Terug</button>
+</section>
+
+<section id="three" class="s hide">
+<h2>Ekonomiese Analise</h2>
+<div class="card">
+<div class="row"><span>Klient</span><b id="rClient"></b></div><div class="row"><span>Datum</span><b id="rDate"></b></div><div class="row"><span>Diersoort</span><b id="rAnimal"></b></div>
+<div class="row"><span>Aankoopprys</span><b id="rBuyPrice"></b></div><div class="row"><span>Slag / karkasprys</span><b id="rCarcassPrice"></b></div>
+</div>
+<div class="card"><div class="muted">WINS / VERLIES PER DIER</div><div id="profit" class="big"></div></div>
+<div class="card" id="out"></div>
+<button class="btn" onclick="saveAnalysis()">💾 STOOR ANALISE</button>
+<button class="btn" onclick="alert('Finale weergawe: deelbare PNG/PDF.')">📸 STOOR RESULTAAT AS FOTO</button>
+<button class="btn secondary" onclick="show('two')">← Verander insette</button>
+<button class="btn secondary" onclick="show('one')">Nuwe analise</button>
+</section>
+
+<section id="history" class="s hide">
+<h2>Gestoorde Analises</h2>
+<div id="historyList"></div>
+<button class="btn secondary" onclick="show('one')">← Terug</button>
+</section>
+</div>
+
+<script>
+let animal='Skaap'; const q=id=>document.getElementById(id), n=id=>parseFloat(q(id).value)||0;
+const m=x=>'R'+x.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+function show(x){['one','two','three','history'].forEach(i=>q(i).classList.add('hide'));q(x).classList.remove('hide')}
+const defaults={
+ Skaap:{bw:30,bp:56,tr:30,wool:80,adg:250,target:48,cp:108,dress:47,stand:2,proc:32.80,mort:2,d1:7,d3:21,
+ pbase:6188.40,pzil:7248.40,pm:3650,pl:3950,po:2200,aBase:200,aZil:0,am:550,al:200,ao:50,gBase:200,gZil:0,gm:650,gl:90,go:60,rBase:0,rZil:200,rm:650,rl:90,ro:60},
+ Bees:{bw:230,bp:48,tr:100,wool:0,adg:1750,target:480,cp:66.50,dress:58,stand:1,proc:100,mort:1,d1:14,d3:30,
+ pbase:6880,pzil:10192.50,pm:3650,pl:3950,po:2200,aBase:100,aZil:0,am:650,al:50,ao:200,gBase:100,gZil:0,gm:750,gl:0,go:150,rBase:0,rZil:100,rm:750,rl:0,ro:150}
+};
+function start(a){
+ animal=a; let d=defaults[a];
+ q('title').textContent=a+' — Klient & Insette'; q('wbox').style.display=a==='Skaap'?'block':'none';
+ Object.keys(d).forEach(k=>{if(q(k))q(k).value=d[k]});
+ q('cd1').value=d.d1;q('cd3').value=d.d3;q('intake').value=(a==='Bees'?3:4);
+ q('baseName').textContent=a+' Voerkraal Konsentraat';
+ q('zilName').textContent=a+' Voerkraal Konsentraat met Zilmax';
+ updateMix(); syncFullPrices(); updateDays(); show('two');
+}
+function toggleFeed(){q('full').classList.toggle('hide',q('system').value!=='full');q('conc').classList.toggle('hide',q('system').value!=='conc');syncFullPrices()}
+function mixCost(prefix){
+ let total=n(prefix+'Base')+n(prefix+'Zil')+n(prefix+'m')+n(prefix+'l')+n(prefix+'o');
+ let cost=(n(prefix+'Base')*n('pbase')+n(prefix+'Zil')*n('pzil')+n(prefix+'m')*n('pm')+n(prefix+'l')*n('pl')+n(prefix+'o')*n('po'))/Math.max(1,total);
+ return {total,cost};
+}
+function updateMix(){
+ let A=mixCost('a'),G=mixCost('g'),R=mixCost('r');
+ q('totA').textContent=A.total.toFixed(0);q('totG').textContent=G.total.toFixed(0);q('totR').textContent=R.total.toFixed(0);
+ q('costA').textContent=m(A.cost);q('costG').textContent=m(G.cost);q('costR').textContent=m(R.cost);
+ return {A,G,R};
+}
+function syncFullPrices(){let x=updateMix();q('p1').value=x.A.cost.toFixed(2);q('p2').value=x.G.cost.toFixed(2);q('p3').value=x.R.cost.toFixed(2)}
+function updateDays(){
+ let g=n('adg')/1000,days=g>0?Math.max(0,(n('target')-n('bw'))/g):0;
+ let d1=q('system').value==='full'?n('d1'):n('cd1'),d3=q('system').value==='full'?n('d3'):n('cd3');
+ q('d2').value=Math.max(0,days-d1-d3).toFixed(1);q('cw').value=(n('target')*n('dress')/100).toFixed(1)+' kg';
+}
+['pbase','pzil','pm','pl','po','aBase','aZil','am','al','ao','gBase','gZil','gm','gl','go','rBase','rZil','rm','rl','ro'].forEach(id=>q(id).addEventListener('input',()=>{updateMix();syncFullPrices()}));
+['bw','target','adg','d1','d3','cd1','cd3','dress'].forEach(id=>q(id).addEventListener('input',updateDays));
+
+let lastAnalysis=null;
+
+function saveAnalysis(){
+ if(!lastAnalysis){alert('Bereken eers die analise.');return;}
+ const key='voerkraalAnalises';
+ let arr=[];
+ try{arr=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){arr=[]}
+ const item={...lastAnalysis,id:Date.now()};
+ arr.unshift(item);
+ localStorage.setItem(key,JSON.stringify(arr.slice(0,100)));
+ alert('Analise is gestoor.');
+}
+
+function showHistory(){
+ const key='voerkraalAnalises';
+ let arr=[];
+ try{arr=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){arr=[]}
+ const box=q('historyList');
+ if(!arr.length){
+   box.innerHTML='<div class="card"><div class="muted">Geen gestoorde analises nog nie.</div></div>';
+ } else {
+   box.innerHTML=arr.map((x,i)=>`
+     <div class="card">
+       <div class="row"><span><b>${x.client||'Onbenoemde klient'}</b></span><b>${x.date||''}</b></div>
+       <div class="row"><span>${x.animal}</span><b>${x.profit}</b></div>
+       <div class="row"><span>ROI per siklus</span><b>${x.roi}</b></div>
+       <div class="row"><span>Dae op voer</span><b>${x.days}</b></div>
+       <button class="btn secondary" onclick="openSaved(${i})">Maak oop</button>
+       <button class="btn secondary" onclick="deleteSaved(${i})">Verwyder</button>
+     </div>`).join('');
+ }
+ show('history');
+}
+function openSaved(i){
+ const key='voerkraalAnalises';
+ let arr=JSON.parse(localStorage.getItem(key)||'[]');
+ if(!arr[i]) return;
+ const x=arr[i];
+ q('rClient').textContent=x.client||'-';
+ q('rDate').textContent=x.date||'-';
+ q('rAnimal').textContent=x.animal||'-';
+ q('rBuyPrice').textContent=x.buyPrice||'-';
+ q('rCarcassPrice').textContent=x.carcassPrice||'-';
+ q('profit').textContent=x.profit||'R0.00';
+ q('out').innerHTML=x.outHtml||'';
+ lastAnalysis=x;
+ show('three');
+}
+function deleteSaved(i){
+ const key='voerkraalAnalises';
+ let arr=JSON.parse(localStorage.getItem(key)||'[]');
+ arr.splice(i,1);
+ localStorage.setItem(key,JSON.stringify(arr));
+ showHistory();
+}
+function calc(){
+ updateDays();let bw=n('bw'),g=n('adg')/1000,target=n('target'),days=Math.max(0,(target-bw)/g);
+ let d1=q('system').value==='full'?n('d1'):n('cd1'),d3=q('system').value==='full'?n('d3'):n('cd3'),d2=Math.max(0,days-d1-d3);
+ let w1=bw+g*d1,w2=w1+g*d2,w3=w2+g*d3,tot=0,fc=0,pct=n('intake')/100;
+ function phase(avg,dd,price){let kg=avg*pct*dd;tot+=kg;fc+=kg*price/1000}
+ if(q('system').value==='full'){phase((bw+w1)/2,d1,n('p1'));phase((w1+w2)/2,d2,n('p2'));phase((w2+w3)/2,d3,n('p3'))}
+ else{let x=updateMix();phase((bw+w1)/2,d1,x.A.cost);phase((w1+w2)/2,d2,x.G.cost);phase((w2+w3)/2,d3,x.R.cost)}
+ let purchase=bw*n('bp'),standing=n('stand')*days,processing=n('proc'),transport=n('tr'),eff=1-n('mort')/100,cw=target*n('dress')/100;
+ let grossCarcass=cw*n('cp'),carcass=grossCarcass*eff,wool=animal==='Skaap'?n('wool'):0,mortalityCost=grossCarcass*(n('mort')/100);
+ let totalCost=purchase+standing+processing+transport+fc,income=carcass+wool,profit=income-totalCost,roi=totalCost?profit/totalCost*100:0,roiy=days?roi/days*365:0;
+ let avgFeed=tot?fc/tot*1000:0,breakSell=(cw*eff)?(totalCost-wool)/(cw*eff):0,breakBuy=bw?(income-(standing+processing+transport+fc))/bw:0;
+ q('rClient').textContent=q('client').value||'-';q('rDate').textContent=q('date').value||'-';q('rAnimal').textContent=animal;q('rBuyPrice').textContent=m(n('bp'))+'/kg';q('rCarcassPrice').textContent=m(n('cp'))+'/kg';q('profit').textContent=m(profit);
+ let rows=[
+ ['Aankoop gewig',bw.toFixed(1)+' kg'],['Dae op voer',days.toFixed(1)],['Gemiddelde inname / dag',(tot/days).toFixed(2)+' kg'],['Totale inname',tot.toFixed(1)+' kg'],
+ ['Gemiddelde voerkoste / ton',m(avgFeed)],['Voerkoste',m(fc)],['Prosseseringskoste',m(processing)],['Staankoste',m(standing)],['Koste van mortaliteite / dier',m(mortalityCost)],['Totale koste',m(totalCost)],
+ ['Slag gewig',target.toFixed(1)+' kg'],['Uitslag %',n('dress').toFixed(1)+'%'],['Karkas gewig',cw.toFixed(1)+' kg'],['Inkomste vanaf karkas',m(carcass)]
+ ];
+ if(animal==='Skaap')rows.push(['Inkomste vanaf wol',m(wool)]);
+ rows.push(['Totale inkomste',m(income)],['Wins / Verlies',m(profit)],['ROI per siklus',roi.toFixed(1)+'%'],['ROI per jaar',roiy.toFixed(1)+'%'],['Gelykbreek verkoopprys/kg karkas',m(breakSell)],['Gelykbreek aankoopprys/kg',m(breakBuy)]);
+ q('out').innerHTML=rows.map(r=>'<div class="row"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('');
+ lastAnalysis={
+   client:q('client').value||'',
+   date:q('date').value||'',
+   animal:animal,
+   buyPrice:m(n('bp'))+'/kg',
+   carcassPrice:m(n('cp'))+'/kg',
+   profit:m(profit),
+   roi:roi.toFixed(1)+'%',
+   days:days.toFixed(1),
+   outHtml:q('out').innerHTML
+ };
+ show('three');
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body></html>
