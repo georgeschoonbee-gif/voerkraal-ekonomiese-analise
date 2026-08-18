@@ -24,7 +24,7 @@ table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}th,td{b
 .row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #dde5de;font-size:13px}.row:last-child{border:0}.row b{text-align:right}
 </style></head>
 <body><div class="app">
-<header><h1>VOERKRAAL EKONOMIESE ANALISE</h1><div class="sub">iPhone PWA V8</div></header>
+<header><h1>VOERKRAAL EKONOMIESE ANALISE</h1><div class="sub">iPhone PWA V9</div></header>
 
 <section id="one" class="s">
 <h2>Kies diersoort</h2>
@@ -89,7 +89,7 @@ table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}th,td{b
 <div class="card"><div class="muted">WINS / VERLIES PER DIER</div><div id="profit" class="big"></div></div>
 <div class="card" id="out"></div>
 <button class="btn" onclick="saveAnalysis()">💾 STOOR ANALISE</button>
-<button class="btn" onclick="alert('Finale weergawe: deelbare PNG/PDF.')">📸 STOOR RESULTAAT AS FOTO</button>
+<button class="btn" onclick="saveResultAsPhoto()">📸 STOOR RESULTAAT AS FOTO</button>
 <button class="btn secondary" onclick="show('two')">← Verander insette</button>
 <button class="btn secondary" onclick="show('one')">Nuwe analise</button>
 </section>
@@ -195,6 +195,17 @@ function deleteSaved(i){
  arr.splice(i,1);
  localStorage.setItem(key,JSON.stringify(arr));
  showHistory();
+}
+
+async function saveResultAsPhoto(){
+ if(!lastAnalysis){alert('Bereken eers die analise.');return;}
+ const rows=[...q('out').querySelectorAll('.row')].map(r=>[r.querySelector('span')?.textContent||'',r.querySelector('b')?.textContent||'']);
+ const client=q('rClient').textContent||'-',date=q('rDate').textContent||'-',species=q('rAnimal').textContent||'-',buy=q('rBuyPrice').textContent||'-',carcass=q('rCarcassPrice').textContent||'-',profit=q('profit').textContent||'R0.00';
+ const W=1200,pad=70,rowH=54,H=480+rows.length*rowH,esc=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ let body='';rows.forEach((r,i)=>{let y=420+i*rowH;body+=`<line x1="${pad}" y1="${y+rowH}" x2="${W-pad}" y2="${y+rowH}" stroke="#dce6dd" stroke-width="2"/><text x="${pad}" y="${y+36}" font-size="25" fill="#294333">${esc(r[0])}</text><text x="${W-pad}" y="${y+36}" font-size="25" font-weight="700" text-anchor="end" fill="#193523">${esc(r[1])}</text>`});
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect width="100%" height="100%" fill="#fff"/><rect width="100%" height="145" fill="#245b32"/><text x="${W/2}" y="62" font-family="Arial" font-size="38" font-weight="700" text-anchor="middle" fill="#fff">VOERKRAAL EKONOMIESE ANALISE</text><text x="${W/2}" y="105" font-family="Arial" font-size="23" text-anchor="middle" fill="#e8f0e9">${esc(species)}</text><g font-family="Arial"><text x="${pad}" y="195" font-size="25">Klient</text><text x="${W-pad}" y="195" font-size="25" font-weight="700" text-anchor="end">${esc(client)}</text><text x="${pad}" y="240" font-size="25">Datum</text><text x="${W-pad}" y="240" font-size="25" font-weight="700" text-anchor="end">${esc(date)}</text><text x="${pad}" y="285" font-size="25">Aankoopprys</text><text x="${W-pad}" y="285" font-size="25" font-weight="700" text-anchor="end">${esc(buy)}</text><text x="${pad}" y="330" font-size="25">Slag / karkasprys</text><text x="${W-pad}" y="330" font-size="25" font-weight="700" text-anchor="end">${esc(carcass)}</text><rect x="${pad}" y="350" width="${W-pad*2}" height="70" rx="18" fill="#f1f6f2"/><text x="${pad+25}" y="395" font-size="26" font-weight="700" fill="#245b32">WINS / VERLIES PER DIER</text><text x="${W-pad-25}" y="398" font-size="34" font-weight="800" text-anchor="end" fill="#245b32">${esc(profit)}</text>${body}</g></svg>`;
+ const blob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'}),url=URL.createObjectURL(blob),img=new Image();
+ img.onload=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(img,0,0);URL.revokeObjectURL(url);c.toBlob(async png=>{const safe=(client||'Klient').replace(/[^a-zA-Z0-9_-]+/g,'_'),filename=`Voerkraal_Analise_${safe}_${date||'datum'}.png`,file=new File([png],filename,{type:'image/png'});try{if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:'Voerkraal Ekonomiese Analise'});return}}catch(e){if(e?.name==='AbortError')return}const a=document.createElement('a');a.href=URL.createObjectURL(png);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},'image/png')};img.src=url;
 }
 function calc(){
  updateDays();let bw=n('bw'),g=n('adg')/1000,target=n('target'),days=Math.max(0,(target-bw)/g);
