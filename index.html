@@ -40,43 +40,12 @@ table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}th,td{b
 .advanced summary{font-weight:800;color:#245b32;cursor:pointer;padding:8px 0}
 
 
-.auth-overlay{position:fixed;inset:0;background:#eef2ee;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
-.auth-box{width:min(440px,100%);background:#fff;border-radius:18px;padding:24px;box-shadow:0 12px 45px #0002}
-.auth-box h2{color:#245b32;text-align:center;margin-bottom:8px}
-.auth-box p{font-size:13px;color:#647068;line-height:1.45;text-align:center}
-.auth-error{font-size:12px;color:#a33;min-height:18px;margin-top:6px}
-.inline-check{display:flex;align-items:center;gap:8px;margin:12px 0;font-size:13px}
-.inline-check input{width:auto}
-.logout-btn{width:auto;padding:9px 12px;margin:10px auto 0;display:block;font-size:12px}
 .admin-lock{border:1px dashed #9eb1a2;border-radius:10px;padding:12px;margin-top:10px;text-align:center}
 
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body onload="setTimeout(()=>{if(!localStorage.getItem(AUTH_APP_KEY)){}else{openIdeal()}},250)">
-<div id="setupOverlay" class="auth-overlay hide">
-  <div class="auth-box">
-    <h2>Stel toegang op</h2>
-    <p>Hierdie is die eerste keer op hierdie toestel. Kies 'n gewone App-wagwoord en 'n aparte Admin-wagwoord.</p>
-    <label>App-wagwoord</label><input id="setupAppPass" type="password" autocomplete="new-password">
-    <label>Bevestig App-wagwoord</label><input id="setupAppPass2" type="password" autocomplete="new-password">
-    <label>Admin-wagwoord</label><input id="setupAdminPass" type="password" autocomplete="new-password">
-    <label>Bevestig Admin-wagwoord</label><input id="setupAdminPass2" type="password" autocomplete="new-password">
-    <div id="setupError" class="auth-error"></div>
-    <button class="btn" onclick="savePasswordSetup()">STEL WAGWOORDE</button>
-  </div>
-</div>
-<div id="loginOverlay" class="auth-overlay hide">
-  <div class="auth-box">
-    <h2>Voerkraal Ekonomiese Analise</h2>
-    <p>Voer jou App-wagwoord in om voort te gaan.</p>
-    <label>App-wagwoord</label><input id="loginPass" type="password" autocomplete="current-password">
-    <label class="inline-check"><input id="rememberLogin" type="checkbox"> Onthou my op hierdie toestel</label>
-    <div id="loginError" class="auth-error"></div>
-    <button class="btn" onclick="attemptLogin()">TEKEN IN</button>
-  </div>
-</div>
-<div class="app">
-<header><h1>VOERKRAAL EKONOMIESE ANALISE</h1><div class="sub">V11 Toetsweergawe</div></header>
+<body><div class="app">
+<header><h1>VOERKRAAL EKONOMIESE ANALISE</h1><div class="sub">iPhone PWA V11</div></header>
 
 <section id="one" class="s">
 <h2>Kies diersoort</h2>
@@ -84,7 +53,6 @@ table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}th,td{b
 <button class="choice" onclick="start('Bees')">🐂 BEES</button>
 <button class="choice" onclick="openIdeal()">📊 IDEALE SLAG GEWIG</button>
 <button class="btn secondary" onclick="showHistory()">📁 GESTOORDE ANALISES</button>
-<button class="btn secondary logout-btn" onclick="logoutApp()">🔒 LOG UIT</button>
 </section>
 
 <section id="two" class="s hide">
@@ -182,7 +150,7 @@ table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}th,td{b
 
 <div id="advancedLock" class="admin-lock">
   <b>🔐 Gevorderde Parameters</b>
-  <div style="font-size:12px;color:#68746b;margin-top:5px">Admin-toegang word vereis.</div>
+  <div style="font-size:12px;color:#68746b;margin-top:5px">Admin-wagwoord word vereis.</div>
   <button class="btn secondary" onclick="unlockAdvanced()">ADMIN TOEGANG</button>
 </div>
 <div id="advancedPanel" class="advanced hide">
@@ -270,100 +238,91 @@ function updateDays(){
 
 
 
-const AUTH_APP_KEY='vea_app_hash_v1',AUTH_ADMIN_KEY='vea_admin_hash_v1',AUTH_REMEMBER='vea_remember_login';
-
-async function hashText(t){
-  const data=new TextEncoder().encode(t);
-  const digest=await crypto.subtle.digest('SHA-256',data);
-  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-function hideAuth(){q('setupOverlay').classList.add('hide');q('loginOverlay').classList.add('hide')}
-async function initAuth(){
-  const appHash=localStorage.getItem(AUTH_APP_KEY),adminHash=localStorage.getItem(AUTH_ADMIN_KEY);
-  if(!appHash||!adminHash){q('setupOverlay').classList.remove('hide');return}
-  if(localStorage.getItem(AUTH_REMEMBER)==='1'||sessionStorage.getItem('vea_session')==='1'){hideAuth();return}
-  q('loginOverlay').classList.remove('hide');
-}
-async function savePasswordSetup(){
-  const a=q('setupAppPass').value,a2=q('setupAppPass2').value,b=q('setupAdminPass').value,b2=q('setupAdminPass2').value;
-  if(a.length<4||b.length<4){q('setupError').textContent='Gebruik minstens 4 karakters vir elke wagwoord.';return}
-  if(a!==a2){q('setupError').textContent='App-wagwoorde stem nie ooreen nie.';return}
-  if(b!==b2){q('setupError').textContent='Admin-wagwoorde stem nie ooreen nie.';return}
-  localStorage.setItem(AUTH_APP_KEY,await hashText(a));localStorage.setItem(AUTH_ADMIN_KEY,await hashText(b));
-  sessionStorage.setItem('vea_session','1');hideAuth();
-}
-async function attemptLogin(){
-  const h=await hashText(q('loginPass').value);
-  if(h!==localStorage.getItem(AUTH_APP_KEY)){q('loginError').textContent='Verkeerde wagwoord.';return}
-  sessionStorage.setItem('vea_session','1');
-  if(q('rememberLogin').checked)localStorage.setItem(AUTH_REMEMBER,'1');else localStorage.removeItem(AUTH_REMEMBER);
-  q('loginPass').value='';q('loginError').textContent='';hideAuth();
-}
-function logoutApp(){
-  sessionStorage.removeItem('vea_session');localStorage.removeItem(AUTH_REMEMBER);
-  q('loginOverlay').classList.remove('hide');
-}
-async function unlockAdvanced(){
+function unlockAdvanced(){
   const pass=prompt('Voer Admin-wagwoord in:');
   if(pass===null)return;
-  if(await hashText(pass)!==localStorage.getItem(AUTH_ADMIN_KEY)){alert('Verkeerde Admin-wagwoord.');return}
-  q('advancedLock').classList.add('hide');q('advancedPanel').classList.remove('hide');
+  if(pass!=='Admin!'){alert('Verkeerde Admin-wagwoord.');return}
+  q('advancedLock').classList.add('hide');
+  q('advancedPanel').classList.remove('hide');
 }
 function lockAdvanced(){
   if(q('advancedPanel'))q('advancedPanel').classList.add('hide');
   if(q('advancedLock'))q('advancedLock').classList.remove('hide');
 }
-window.addEventListener('load',()=>{initAuth();lockAdvanced()});
 
-function pdfMoney(x){return 'R'+Number(x).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})}
 async function shareIdealPDF(){
   if(!idealData.length) calculateIdeal();
   drawIdealCharts();
-  await new Promise(r=>setTimeout(r,80));
-  if(!window.jspdf){alert('PDF biblioteek kon nie laai nie. Maak seker die toestel het internet en probeer weer.');return}
+  await new Promise(r=>setTimeout(r,100));
+  if(!window.jspdf){
+    alert('PDF-biblioteek kon nie laai nie. Maak seker jy het internet en probeer weer.');
+    return;
+  }
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const pageW=297,pageH=210,margin=10;
   const best=idealData.reduce((a,b)=>b.profit>a.profit?b:a,idealData[0]);
+  const pm=x=>'R'+Number(x).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   doc.setFillColor(36,91,50);doc.rect(0,0,pageW,24,'F');
-  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text('VOERKRAAL EKONOMIESE ANALISE - IDEALE SLAG GEWIG',pageW/2,10,{align:'center'});
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(17);
+  doc.text('VOERKRAAL EKONOMIESE ANALISE - IDEALE SLAG GEWIG',pageW/2,10,{align:'center'});
   doc.setFontSize(10);doc.text('Ekonomiese vergelyking van slaggewigte',pageW/2,17,{align:'center'});
-  doc.setTextColor(25,53,35);doc.setFontSize(12);doc.text(`Aanbevole slaggewig: ${best.weight.toFixed(1)} kg`,margin,34);
-  doc.text(`Bruto wins / lam: ${pdfMoney(best.profit)}`,margin,42);
+
+  doc.setTextColor(25,53,35);doc.setFontSize(11);
+  doc.text(`Aanbevole slaggewig: ${best.weight.toFixed(1)} kg`,margin,34);
+  doc.text(`Bruto wins / lam: ${pm(best.profit)}`,margin,42);
   doc.text(`Jaarlikse ROI: ${(best.annualROI*100).toFixed(1)}%`,margin,50);
-  doc.text(`Karkasgewig: ${best.carcassW.toFixed(1)} kg`,100,34);
-  doc.text(`Aankoopgewig: ${iv('isBuyWeight').toFixed(1)} kg`,100,42);
-  doc.text(`Aankoopprys: ${pdfMoney(iv('isBuyPrice'))}/kg`,100,50);
+  doc.text(`Karkasgewig: ${best.carcassW.toFixed(1)} kg`,105,34);
+  doc.text(`Aankoopgewig: ${iv('isBuyWeight').toFixed(1)} kg`,105,42);
+  doc.text(`Aankoopprys: ${pm(iv('isBuyPrice'))}/kg`,105,50);
 
   const headers=['Maatstaf',...idealData.map(x=>x.weight.toFixed(1)+' kg')];
   const metrics=[
     ['Karkas gewig',x=>x.carcassW.toFixed(2)],
     ['Dae gevoer',x=>x.days.toFixed(1)],
-    ['Voerkoste R/ton',x=>pdfMoney(x.avgFeedCost)],
+    ['Voerkoste R/ton',x=>pm(x.avgFeedCost)],
     ['VOV',x=>x.fcr.toFixed(2)],
     ['Uitslag %',x=>x.dress.toFixed(2)+'%'],
     ['Totale kg voer',x=>x.totalFeed.toFixed(1)],
-    ['Voerkoste / lam',x=>pdfMoney(x.feedCost)],
-    ['Inkomste karkas',x=>pdfMoney(x.carcassIncome)],
-    ['Totale koste',x=>pdfMoney(x.purchase+x.feedCost+x.processing+x.standing+x.mortality)],
-    ['Bruto Wins / lam',x=>pdfMoney(x.profit)],
+    ['Voerkoste / lam',x=>pm(x.feedCost)],
+    ['Inkomste karkas',x=>pm(x.carcassIncome)],
+    ['Totale koste',x=>pm(x.purchase+x.feedCost+x.processing+x.standing+x.mortality)],
+    ['Bruto Wins / lam',x=>pm(x.profit)],
     ['ROI / jaar',x=>(x.annualROI*100).toFixed(1)+'%'],
-    ['Kapitaal benodig',x=>pdfMoney(x.capitalRequired)]
+    ['Kapitaal benodig',x=>pm(x.capitalRequired)]
   ];
-  let y=62;const firstW=45,colW=(pageW-margin*2-firstW)/(headers.length-1),rowH=7;
-  doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setFillColor(237,243,238);
+
+  let y=62;
+  const firstW=45,colW=(pageW-margin*2-firstW)/(headers.length-1),rowH=7;
+  doc.setFontSize(7.3);doc.setFont('helvetica','bold');doc.setFillColor(237,243,238);
   doc.rect(margin,y,firstW,rowH,'F');doc.text(headers[0],margin+1.5,y+4.8);
-  headers.slice(1).forEach((h,i)=>{let x=margin+firstW+i*colW;doc.rect(x,y,colW,rowH,'F');doc.text(h,x+colW/2,y+4.8,{align:'center'})});
+  headers.slice(1).forEach((h,i)=>{
+    let x=margin+firstW+i*colW;
+    doc.rect(x,y,colW,rowH,'F');
+    doc.text(h,x+colW/2,y+4.8,{align:'center'});
+  });
+
   y+=rowH;doc.setFont('helvetica','normal');
   for(const [name,fn] of metrics){
     if(y+rowH>pageH-margin){doc.addPage('a4','landscape');y=15}
-    doc.setDrawColor(220,230,221);doc.rect(margin,y,firstW,rowH);doc.text(name,margin+1.5,y+4.8);
-    idealData.forEach((v,i)=>{let x=margin+firstW+i*colW;doc.rect(x,y,colW,rowH);let t=fn(v);doc.text(String(t),x+colW/2,y+4.8,{align:'center',maxWidth:colW-1})});
+    doc.setDrawColor(220,230,221);
+    doc.rect(margin,y,firstW,rowH);
+    doc.text(name,margin+1.5,y+4.8);
+    idealData.forEach((v,i)=>{
+      let x=margin+firstW+i*colW;
+      doc.rect(x,y,colW,rowH);
+      doc.text(String(fn(v)),x+colW/2,y+4.8,{align:'center',maxWidth:colW-1});
+    });
     y+=rowH;
   }
 
-  const charts=[['Finansies','chartFinance'],['Karkas gewig','chartCarcass'],['Uitslag %','chartDress'],['Voer Omset Verhouding','chartFCR']];
+  const charts=[
+    ['Finansies','chartFinance'],
+    ['Karkas gewig','chartCarcass'],
+    ['Uitslag %','chartDress'],
+    ['Voer Omset Verhouding','chartFCR']
+  ];
   for(let i=0;i<charts.length;i+=2){
     doc.addPage('a4','landscape');
     doc.setTextColor(25,53,35);doc.setFont('helvetica','bold');doc.setFontSize(14);
@@ -377,13 +336,21 @@ async function shareIdealPDF(){
   const blob=doc.output('blob');
   const file=new File([blob],`Ideale_Slag_Gewig_${new Date().toISOString().slice(0,10)}.pdf`,{type:'application/pdf'});
   try{
-    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
+    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
       await navigator.share({files:[file],title:'Ideale Slag Gewig'});
       return;
     }
-  }catch(e){if(e?.name==='AbortError')return}
-  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
+  }catch(e){
+    if(e?.name==='AbortError')return;
+  }
+
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=file.name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
 }
+
+window.addEventListener('load',lockAdvanced);
 
 let idealData=[];
 

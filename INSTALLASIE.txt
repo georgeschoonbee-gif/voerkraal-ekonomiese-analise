@@ -30,3 +30,5 @@ icon-192.png
 icon-512.png
 
 V10 voeg 'Ideale Slag Gewig' by met insette, 'n volledige resultaatstabel en vier grafieke gebaseer op die Excel-model.
+
+V11: Geen app-login. Gevorderde parameters vereis Admin-wagwoord: Admin! PDF deel/stoor is ingesluit.
