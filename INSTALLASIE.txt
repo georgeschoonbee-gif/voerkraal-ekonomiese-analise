@@ -1,4 +1,4 @@
-VOERKRAAL EKONOMIESE ANALISE – iPhone PWA V8
+VOERKRAAL EKONOMIESE ANALISE – iPhone PWA V10
 
 HOE OM DIT TE GEBRUIK
 
@@ -28,3 +28,5 @@ service-worker.js
 icon-180.png
 icon-192.png
 icon-512.png
+
+V10 voeg 'Ideale Slag Gewig' by met insette, 'n volledige resultaatstabel en vier grafieke gebaseer op die Excel-model.
