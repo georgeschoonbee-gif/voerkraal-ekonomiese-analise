@@ -2,18 +2,18 @@
 <html lang="af">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Voerkraal Ekonomiese Analise</title>
+<title>Jacobsdal Abattoir | Voerkraal Ekonomiese Analise</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#245b32">
+<meta name="theme-color" content="#087fbd">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Voerkraal Analise">
-<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-title" content="Jacobsdal Voerkraal">
+<link rel="apple-touch-icon" href="jacobsdal-logo.png">
 
 <style>
 *{box-sizing:border-box}body{margin:0;background:#eef2ee;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#193523}
 .app{max-width:520px;margin:auto;background:#fff;min-height:100vh}header{background:#245b32;color:#fff;text-align:center;padding:18px}
-header h1{margin:0;font-size:19px}.sub{font-size:12px;opacity:.85;margin-top:3px}.s{padding:20px}.hide{display:none}
+header h1{margin:0;font-size:19px} header img{width:130px;height:115px;object-fit:contain;display:block;margin:0 auto 5px}.sub{font-size:12px;opacity:.85;margin-top:3px}.s{padding:20px}.hide{display:none}
 h2{margin:0 0 18px}.choice,.btn{width:100%;padding:17px;margin:8px 0;border:0;border-radius:12px;font-size:17px;font-weight:800}
 .choice{background:#f8faf8;border:2px solid #d7e2d8;color:#245b32;font-size:21px}.btn{background:#245b32;color:#fff}.secondary{background:#e8eee9;color:#245b32}
 .section{font-weight:800;color:#245b32;border-bottom:2px solid #e4eae5;padding:14px 0 6px}
@@ -42,10 +42,23 @@ table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}th,td{b
 
 .admin-lock{border:1px dashed #9eb1a2;border-radius:10px;padding:12px;margin-top:10px;text-align:center}
 
+/* Jacobsdal Abattoir colour palette — presentation changes only */
+body{background:#eef5f8;color:#142f3d}
+header{background:#087fbd;color:#fff}
+.section{color:#087fbd;border-bottom-color:#cde4f0}
+.choice{color:#087fbd;border-color:#c6dfee;background:#f5fbfe}
+.btn{background:#087fbd;color:#fff}
+.secondary{background:#e6f4d7;color:#255319}
+.phase h3,.tabbtn,.chartbox h3,.kpi .kvalue,.big{color:#087fbd}
+.tabbtn.active{background:#087fbd;color:#fff}
+.tabbtn{background:#e7f3dc}
+.card,.kpi{background:#f0f8e8}
+th,.ideal-table th:first-child{background:#e8f3fa;color:#087fbd}
+.ideal-table th:first-child{background:#e8f3fa}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body><div class="app">
-<header><h1>VOERKRAAL EKONOMIESE ANALISE</h1><div class="sub">iPhone PWA V11</div></header>
+<header><img src="jacobsdal-logo.png" alt="Jacobsdal Abattoir logo"><h1>VOERKRAAL EKONOMIESE ANALISE</h1><div class="sub">iPhone PWA V11</div></header>
 
 <section id="one" class="s">
 <h2>Kies diersoort</h2>
