@@ -199,7 +199,7 @@ table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}th,td{b
 <script>
 let animal='Skaap'; const q=id=>document.getElementById(id), n=id=>parseFloat(q(id).value)||0;
 const m=x=>'R'+x.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
-function show(x){['one','two','three','history','ideal'].forEach(i=>q(i).classList.add('hide'));q(x).classList.remove('hide')}
+function show(x){['one','two','three','history','ideal','valueTools'].forEach(i=>q(i).classList.add('hide'));q(x).classList.remove('hide')}
 const defaults={
  Skaap:{bw:30,bp:56,tr:30,wool:80,adg:250,target:48,cp:108,dress:47,stand:2,proc:32.80,mort:2,d1:7,d3:21,
  pbase:6188.40,pzil:7248.40,pm:3650,pl:3950,po:2200,aBase:200,aZil:0,am:550,al:200,ao:50,gBase:200,gZil:0,gm:650,gl:90,go:60,rBase:0,rZil:200,rm:650,rl:90,ro:60},
