@@ -43,7 +43,19 @@ table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}th,td{b
 .admin-lock{border:1px dashed #9eb1a2;border-radius:10px;padding:12px;margin-top:10px;text-align:center}
 
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-</head>
+<style>
+.lek-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.lek-settings>div:last-child{grid-column:1/-1}
+.lek-cards,.lek-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.lek-card,.lek-result{min-width:0;padding:12px;border:1px solid #d5e2d7;border-radius:12px;background:#f7faf7}
+.lek-card h3,.lek-result h3{font-size:15px;color:#245b32;margin:0 0 8px}
+.lek-result-main{font-size:26px;font-weight:850;color:#245b32}
+.lek-result-sub{font-size:11px;color:#627568;margin-bottom:10px}
+.lek-result-row{display:flex;justify-content:space-between;gap:5px;align-items:baseline;border-top:1px solid #dbe5dc;padding:7px 0;font-size:11px}
+.lek-result-row strong{text-align:right}
+.tool-help{font-size:12px;color:#4d6655;line-height:1.5}
+@media(max-width:390px){.lek-cards,.lek-results{gap:7px}.lek-card,.lek-result{padding:9px}.lek-result-main{font-size:22px}}
+</style></head>
 <body><div class="app">
 <header><div style="font-size:12px;font-weight:800;letter-spacing:2px;margin-bottom:5px">WEIDEMAN VOERE</div><h1>VOERKRAAL EKONOMIESE ANALISE</h1><div class="sub">Weideman Value Tools V12</div></header>
 
@@ -637,6 +649,19 @@ let valueType='fcr';
 const moneyV=x=>'R '+x.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const valueN=id=>Number(document.getElementById(id).value);
 function valueField(id,label,def){return '<div><label>'+label+'</label><input type="number" step="any" min="0" id="'+id+'" value="'+def+'"></div>'}
+
+let lekCount=0;
+function escapeLek(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function addLek(){
+ if(lekCount>=4)return;
+ const i=lekCount++;
+ const names=['Lek A','Weideman Lek B','Lek C','Lek D'],prices=[6000,7200,7000,6500],proteins=[400,500,450,420],phosphorus=[10,12,8,9];
+ const html='<div class="lek-card"><h3>LEK '+(i+1)+'</h3><label>Produknaam</label><input id="lekName'+i+'" value="'+names[i]+'">'+valueField('lekPrice'+i,'Prys (R/ton)',prices[i])+valueField('lekProtein'+i,'Ruproteien (g/kg, soos gevoer)',proteins[i])+valueField('lekPhosphorus'+i,'Fosfor (g/kg, soos gevoer)',phosphorus[i])+'</div>';
+ document.getElementById('lekCards').insertAdjacentHTML('beforeend',html);
+ document.getElementById('addLekBtn').style.display=lekCount>=4?'none':'block';
+ document.getElementById('valueAnswer').innerHTML='';
+}
+
 function valueOpen(type){
  valueType=type;show('valueTools');
  document.getElementById('valueAnswer').innerHTML='';
@@ -649,10 +674,10 @@ function valueOpen(type){
  h=valueField('countV','Aantal diere',300)+valueField('intakeV','Aanvulling kg/dier/dag',.35)+valueField('pB','Aanvulling R/ton',7200)+valueField('daysV','Voerdae',120)+valueField('gainV','Ekstra verkoopbare groei kg/dier',6)+valueField('valueV','Waarde R/kg',45)+valueField('extraV','Ander ekstra koste R/dier',0)+valueField('savingV','Ander besparings R/dier',0);
  }else{
  document.getElementById('valueTitle').textContent='Lekvergelyking';
- h=valueField('countV','Aantal diere',300)+valueField('daysV','Dae op lek',120);
- ['A','B','C','D'].forEach((x,i)=>{h+='<div class="section">Lek '+x+'</div>'+valueField('p'+x,'Prys R/ton',[6000,7200,7000,6500][i])+valueField('i'+x,'Inname kg/dier/dag',[.5,.35,.4,.45][i])+valueField('cp'+x,'Ruproteien % (0 = onbekend)',0)+valueField('ph'+x,'Fosfor % (0 = onbekend)',0)});
+ h='<div class="lek-settings">'+valueField('countV','Aantal diere',300)+valueField('daysV','Dae op lek',120)+valueField('targetProtein','Benodigde ruproteien uit lek (g/dier/dag)',250)+'</div><p class="tool-help">Stel die verlangde ruproteien-inname uit die lek vas. Die berekende lekinname en fosforvoorsiening sal outomaties volg.</p><div id="lekCards" class="lek-cards"></div><button type="button" class="btn secondary" id="addLekBtn" onclick="addLek()">+ Voeg nog n lek by</button>';
  }
- document.getElementById('valueForm').innerHTML='<div class="grid">'+h+'</div>';
+ document.getElementById('valueForm').innerHTML=type==='lick'?h:'<div class="grid">'+h+'</div>';
+ if(type==='lick'){lekCount=0;addLek();addLek();}
 }
 function valueCalc(){
  const ids=Array.from(document.querySelectorAll('#valueForm input'));
@@ -673,16 +698,20 @@ function valueCalc(){
  body='<div class="big">Netto bydrae per dier: '+moneyV(net)+'</div><p>Vir '+count+' diere: '+moneyV(net*count)+'</p><p>Aanvullings- en ekstra koste/dier: '+moneyV(cost)+'</p><p>Ekstra waarde/dier: '+moneyV(gain*v+saving)+'</p><p>Gelykbreek ekstra groei: '+(v>0?Math.max(0,(cost-saving)/v).toFixed(2)+' kg':'NVT')+'</p>';
  note='Gebruik slegs ekstra koste en voordele teenoor n toepaslike basisprogram.';
  }else{
- const days=valueN('daysV');if(days<=0){alert('Dae moet positief wees.');return}
- let rows='',min=Infinity;
- for(const x of ['A','B','C','D']){
- const p=valueN('p'+x),i=valueN('i'+x),cp=valueN('cp'+x),ph=valueN('ph'+x);
- if(cp>100||ph>100){alert('Persentasies moet tussen 0 en 100 wees.');return}
- const daily=p*i/1000,total=daily*count*days;min=Math.min(min,total);
- rows+='<tr><td>Lek '+x+'</td><td>'+moneyV(daily)+'</td><td>'+moneyV(total)+'</td><td>'+(cp? (i*cp*10).toFixed(1)+' g':'—')+'</td><td>'+(ph?(i*ph*10).toFixed(1)+' g':'—')+'</td></tr>';
+ const days=valueN('daysV'),target=valueN('targetProtein');
+ if(days<=0||target<=0){alert('Dae en proteiendoelwit moet positief wees.');return}
+ const rows=[];
+ for(let i=0;i<lekCount;i++){
+ const price=valueN('lekPrice'+i),cp=valueN('lekProtein'+i),p=valueN('lekPhosphorus'+i);
+ const name=document.getElementById('lekName'+i).value.trim()||('Lek '+(i+1));
+ if(price<0||cp<=0||cp>1000||p<0||p>1000){alert('Kontroleer die prys en voedingswaardes (g/kg). Ruproteien moet groter as nul wees.');return}
+ const intakeKg=target/cp,daily=price*intakeKg/1000,period=daily*count*days,pDay=intakeKg*p;
+ rows.push({name,cp,p,price,intakeKg,daily,period,pDay});
  }
- body='<div class="big">Laagste uitgawe: '+moneyV(min)+'</div><div class="scroll-table"><table><tr><th>Lek</th><th>R/dier/dag</th><th>Totaal</th><th>RP/dag</th><th>P/dag</th></tr>'+rows+'</table></div>';
- note='Laagste prys beteken nie voedingskundige ekwivalensie nie; bevestig sout, NPN, ruvoer en voorgeskrewe inname.';
+ const min=Math.min(...rows.map(r=>r.period));
+ body='<div class="card"><b>Gelyke ruproteiendoelwit:</b> '+target.toFixed(0)+' g/dier/dag<br><b>Goedkoopste berekende koste:</b> '+moneyV(min)+'</div>';
+ body+='<div class="lek-results">'+rows.map(r=>'<div class="lek-result"><h3>'+escapeLek(r.name)+'</h3><div class="lek-result-main">'+(r.intakeKg*1000).toFixed(0)+' g/dag</div><div class="lek-result-sub">Berekende lekinname</div><div class="lek-result-row"><span>Ruproteien</span><strong>'+r.cp.toFixed(0)+' g/kg</strong></div><div class="lek-result-row"><span>Fosfor</span><strong>'+r.p.toFixed(1)+' g/kg</strong></div><div class="lek-result-row"><span>Fosfor voorsien</span><strong>'+r.pDay.toFixed(2)+' g/dier/dag</strong></div><div class="lek-result-row"><span>Koste per dier/dag</span><strong>'+moneyV(r.daily)+'</strong></div><div class="lek-result-row"><span>Totale koste</span><strong>'+moneyV(r.period)+'</strong></div></div>').join('')+'</div>';
+ note='Die model stel ruproteien (RP) gelyk, nie verteerbare of metaboliseerbare proteien nie. Dit bereken teoretiese inname; diere se werklike vrywillige lekverbruik kan verskil. Vergelyk ook NPN/ureum, kwaliteit van proteien, fosforbehoeftes, sout, ruvoer en die vervaardiger se veilige aanbevole inname. Moenie die berekende inname as n voedingsaanbeveling gebruik sonder tegniese beoordeling nie.';
  }
  document.getElementById('valueAnswer').innerHTML=body+'<p class="muted">'+note+'</p>';
 }
