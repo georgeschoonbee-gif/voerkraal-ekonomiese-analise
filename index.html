@@ -45,17 +45,17 @@ table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}th,td{b
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body><div class="app">
-<header><h1>VOERKRAAL EKONOMIESE ANALISE</h1><div class="sub">iPhone PWA V11</div></header>
+<header><h1>VOERKRAAL EKONOMIESE ANALISE</h1><div class="sub">Weideman Value Tools V12</div></header>
 
 <section id="one" class="s">
 <h2>Kies diersoort</h2>
 <button class="choice" onclick="start('Skaap')">🐑 SKAAP</button>
 <button class="choice" onclick="start('Bees')">🐂 BEES</button>
 <button class="choice" onclick="openIdeal()">📊 IDEALE SLAG GEWIG</button>
-<button class="btn secondary" onclick="showHistory()">📁 GESTOORDE ANALISES</button>
+<button class="btn secondary" onclick="showHistory()">📁 GESTOORDE ANALISES</button><div class="section">WEIDEMAN WAARDE-SAKREKENAARS</div><button class="choice" onclick="valueOpen('lick')">🌾 LEKVERGELYKING</button><button class="choice" onclick="valueOpen('fcr')">📈 VOEROMSET GELYKBREEK</button><button class="choice" onclick="valueOpen('roi')">💰 AANVULLINGSOPBRENGS</button>
 </section>
 
-<section id="two" class="s hide">
+<section id="valueTools" class="s hide"><button class="btn secondary" onclick="show('one')">← Terug</button><h2 id="valueTitle">Waarde-sakrekenaar</h2><div id="valueForm"></div><button class="btn" onclick="valueCalc()">Bereken</button><div id="valueAnswer"></div><p class="muted">Illustratiewe aannames. Bevestig produkspesifikasies, inname en werklike prestasie.</p><button class="btn secondary" onclick="window.print()">Druk / PDF</button></section><section id="two" class="s hide">
 <h2 id="title"></h2>
 <div class="section">Klient inligting</div>
 <label>Naam</label><input id="client">
@@ -631,4 +631,59 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-</body></html>
+
+<script>
+let valueType='fcr';
+const moneyV=x=>'R '+x.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const valueN=id=>Number(document.getElementById(id).value);
+function valueField(id,label,def){return '<div><label>'+label+'</label><input type="number" step="any" min="0" id="'+id+'" value="'+def+'"></div>'}
+function valueOpen(type){
+ valueType=type;show('valueTools');
+ document.getElementById('valueAnswer').innerHTML='';
+ let h='';
+ if(type==='fcr'){
+ document.getElementById('valueTitle').textContent='Voeromset-gelykbreekpunt';
+ h=valueField('pA','Huidige prys R/ton',4800)+valueField('pB','Weideman prys R/ton',5200)+valueField('fA','Huidige VOV (kg voer/kg groei)',4.8)+valueField('fB','Verwagte VOV',4.2)+valueField('gainV','Groei per dier (kg)',18)+valueField('countV','Aantal diere',1000);
+ }else if(type==='roi'){
+ document.getElementById('valueTitle').textContent='Opbrengs op aanvulling';
+ h=valueField('countV','Aantal diere',300)+valueField('intakeV','Aanvulling kg/dier/dag',.35)+valueField('pB','Aanvulling R/ton',7200)+valueField('daysV','Voerdae',120)+valueField('gainV','Ekstra verkoopbare groei kg/dier',6)+valueField('valueV','Waarde R/kg',45)+valueField('extraV','Ander ekstra koste R/dier',0)+valueField('savingV','Ander besparings R/dier',0);
+ }else{
+ document.getElementById('valueTitle').textContent='Lekvergelyking';
+ h=valueField('countV','Aantal diere',300)+valueField('daysV','Dae op lek',120);
+ ['A','B','C','D'].forEach((x,i)=>{h+='<div class="section">Lek '+x+'</div>'+valueField('p'+x,'Prys R/ton',[6000,7200,7000,6500][i])+valueField('i'+x,'Inname kg/dier/dag',[.5,.35,.4,.45][i])+valueField('cp'+x,'Ruproteien % (0 = onbekend)',0)+valueField('ph'+x,'Fosfor % (0 = onbekend)',0)});
+ }
+ document.getElementById('valueForm').innerHTML='<div class="grid">'+h+'</div>';
+}
+function valueCalc(){
+ const ids=Array.from(document.querySelectorAll('#valueForm input'));
+ if(ids.some(el=>el.value===''||!Number.isFinite(Number(el.value))||Number(el.value)<0)){alert('Kontroleer die invoerwaardes.');return}
+ let body='',note='';
+ const count=valueN('countV');
+ if(count<=0){alert('Aantal diere moet positief wees.');return}
+ if(valueType==='fcr'){
+ const a=valueN('pA'),b=valueN('pB'),f=valueN('fA'),v=valueN('fB'),gain=valueN('gainV');
+ if(a<=0||b<=0||f<=0||v<=0||gain<=0){alert('Prys, VOV en groei moet positief wees.');return}
+ const target=a*f/b,saving=(a*f-b*v)*gain*count/1000;
+ body='<div class="big">Gelykbreek VOV: '+target.toFixed(2)+'</div><p>Huidige voerkoste/kg groei: '+moneyV(a*f/1000)+'</p><p>Weideman voerkoste/kg groei: '+moneyV(b*v/1000)+'</p><div class="card"><strong>'+(saving>=0?'Potensiele besparing':'Bykomende voerkoste')+': '+moneyV(Math.abs(saving))+'</strong></div>';
+ note='Vergelyk VOV op dieselfde voerbasis. Ander produksiekoste is uitgesluit.';
+ }else if(valueType==='roi'){
+ const intake=valueN('intakeV'),p=valueN('pB'),days=valueN('daysV'),gain=valueN('gainV'),v=valueN('valueV'),extra=valueN('extraV'),saving=valueN('savingV');
+ if(days<=0){alert('Voerdae moet positief wees.');return}
+ const cost=intake*p*days/1000+extra,net=gain*v+saving-cost;
+ body='<div class="big">Netto bydrae per dier: '+moneyV(net)+'</div><p>Vir '+count+' diere: '+moneyV(net*count)+'</p><p>Aanvullings- en ekstra koste/dier: '+moneyV(cost)+'</p><p>Ekstra waarde/dier: '+moneyV(gain*v+saving)+'</p><p>Gelykbreek ekstra groei: '+(v>0?Math.max(0,(cost-saving)/v).toFixed(2)+' kg':'NVT')+'</p>';
+ note='Gebruik slegs ekstra koste en voordele teenoor n toepaslike basisprogram.';
+ }else{
+ const days=valueN('daysV');if(days<=0){alert('Dae moet positief wees.');return}
+ let rows='',min=Infinity;
+ for(const x of ['A','B','C','D']){
+ const p=valueN('p'+x),i=valueN('i'+x),cp=valueN('cp'+x),ph=valueN('ph'+x);
+ if(cp>100||ph>100){alert('Persentasies moet tussen 0 en 100 wees.');return}
+ const daily=p*i/1000,total=daily*count*days;min=Math.min(min,total);
+ rows+='<tr><td>Lek '+x+'</td><td>'+moneyV(daily)+'</td><td>'+moneyV(total)+'</td><td>'+(cp? (i*cp*10).toFixed(1)+' g':'—')+'</td><td>'+(ph?(i*ph*10).toFixed(1)+' g':'—')+'</td></tr>';
+ }
+ body='<div class="big">Laagste uitgawe: '+moneyV(min)+'</div><div class="scroll-table"><table><tr><th>Lek</th><th>R/dier/dag</th><th>Totaal</th><th>RP/dag</th><th>P/dag</th></tr>'+rows+'</table></div>';
+ note='Laagste prys beteken nie voedingskundige ekwivalensie nie; bevestig sout, NPN, ruvoer en voorgeskrewe inname.';
+ }
+ document.getElementById('valueAnswer').innerHTML=body+'<p class="muted">'+note+'</p>';
+}
+</script></body></html>
